@@ -16,6 +16,10 @@
             return Boolean(get$foreignWord().length);
         }
 
+        function hasPlayButton() {
+            return Boolean(get$playButton().length);
+        }
+
         function getForeignWord() {
             return get$foreignWord().clone().children().remove().end().text().trim();
         }
@@ -61,8 +65,13 @@
             return $('.CourseWordInfo span:contains("synonimy:")');
         }
 
+        function get$playButton() {
+            return $('.foreignWord .PlayButton');
+        }
+
         return {
             isAnswerScreen: isAnswerScreen,
+            hasPlayButton: hasPlayButton,
             getTranslation: getTranslation,
             getForeignWord: getForeignWord,
             getForeignWords: getForeignWords,
@@ -223,7 +232,30 @@
         };
     })(provider, checker);
 
-    var multikursEnhancer = (function (provider, highlighter, checker) {
+    var speaker = (function () {
+        function say(text) {
+            var utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        return {
+            say: say
+        };
+    });
+
+    var multikursEnhancer = (function (provider, highlighter, checker, speaker) {
+        function enhance() {
+            var parentBinding = window.doBinding;
+            window.doBinding = function() {
+                parentBinding();
+
+                resetTranslationStyle();
+                enhanceTranslationCheck();
+                enhanceSpeaker();
+            };
+            window.checkTranslation = enhanceTranslationCheck;
+        }
+
         function enhanceTranslationCheck() {
             var translationCheck;
 
@@ -239,15 +271,10 @@
             highlighter.highlightButton(translationCheck);
         }
 
-        function enhance() {
-            var parentBinding = window.doBinding;
-            window.doBinding = function() {
-                parentBinding();
-
-                resetTranslationStyle();
-                enhanceTranslationCheck();
-            };
-            window.checkTranslation = enhanceTranslationCheck;
+        function enhanceSpeaker() {
+            if (provider.isAnswerScreen() && !provider.hasPlayButton()) {
+                speaker.say(provider.getForeignWord());
+            }
         }
 
         function resetTranslationStyle() {
@@ -258,7 +285,7 @@
         return {
             enhance: enhance
         };
-    })(provider, highlighter, checker);
+    })(provider, highlighter, checker, speaker);
 
     $(window).load(function() {
         multikursEnhancer.enhance();
