@@ -69,6 +69,10 @@
             return $('.foreignWord .PlayButton');
         }
 
+        function get$transcription() {
+            return $('.foreignWord .transcription');
+        }
+
         return {
             isAnswerScreen: isAnswerScreen,
             hasPlayButton: hasPlayButton,
@@ -76,6 +80,7 @@
             getForeignWord: getForeignWord,
             getForeignWords: getForeignWords,
             getSynonyms: getSynonyms,
+            get$transcription: get$transcription,
             replaceInSynonyms: replaceInSynonyms,
             setTranslationStyle: setTranslationStyle,
             setTranslationAttr: setTranslationAttr
@@ -163,7 +168,6 @@
                     break;
                 case 1:
                 case 2:
-                case 3:
                     evaluation = TYPO_TRANSLATION;
                     break;
                 default:
@@ -234,14 +238,23 @@
 
     var speaker = (function () {
         function say(text) {
-            var utterance = new SpeechSynthesisUtterance(text);
-            window.speechSynthesis.speak(utterance);
+            var msg = new SpeechSynthesisUtterance();
+            msg.text = prepareText(text);
+            msg.voice = speechSynthesis.getVoices().filter(function(voice) { return voice.name == 'Daniel'; })[0];
+            window.speechSynthesis.speak(msg);
+        }
+
+        function prepareText(text) {
+            text = text
+                .replace(/(\W)sb([\W$])/, '$1somebody$2')
+                .replace(/(\W)sth([\W$])/, '$1something$2');
+            return text;
         }
 
         return {
             say: say
         };
-    });
+    })();
 
     var multikursEnhancer = (function (provider, highlighter, checker, speaker) {
         function enhance() {
@@ -254,6 +267,15 @@
                 enhanceSpeaker();
             };
             window.checkTranslation = enhanceTranslationCheck;
+            enhanceSearch();
+        }
+
+        function enhanceSearch() {
+            $('#word_search_input').keypress(function(e) {
+                if (e.which == 13) {
+                    word_search();
+                }
+            });
         }
 
         function enhanceTranslationCheck() {
@@ -273,6 +295,16 @@
 
         function enhanceSpeaker() {
             if (provider.isAnswerScreen() && !provider.hasPlayButton()) {
+                provider.get$transcription().after($('<a/>', {
+                    'class': 'PlayButton key_q key_semicolon',
+                    style: 'display:inline-block;margin:0px 5px;position:relative;top:1px;',
+                    title: 'Odtwórz nagranie',
+                    on: {
+                        click: function () {
+                            speaker.say(provider.getForeignWord());
+                        }
+                    }
+                }));
                 speaker.say(provider.getForeignWord());
             }
         }
