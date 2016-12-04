@@ -1,1 +1,0 @@
-var Anulcia = 'Słodka Żonka';
