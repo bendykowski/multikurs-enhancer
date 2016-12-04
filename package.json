@@ -1,0 +1,15 @@
+{
+  "name": "multikurs",
+  "version": "1.0.0",
+  "description": "Conquer the Multikurs!",
+  "main": "enhancer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jquery": "^2.0.34",
+    "@types/webspeechapi": "0.0.27"
+  }
+}
